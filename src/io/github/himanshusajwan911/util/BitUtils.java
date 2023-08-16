@@ -6,9 +6,9 @@
 package io.github.himanshusajwan911.util;
 
 /**
- * The {@code BitUtils} class provides utility methods for performing
- * bit-level manipulations on various data types. It offers methods to insert,
- * extract, and modify individual bits within bytes and other data types.
+ * The {@code BitUtils} class provides utility methods for performing bit-level
+ * manipulations on various data types. It offers methods to insert, extract,
+ * and modify individual bits within bytes and other data types.
  *
  */
 public class BitUtils {
@@ -28,13 +28,19 @@ public class BitUtils {
      */
     public static byte insertBitAt(byte target, int bitValue, int position) {
 
-        if (position < 0 || position > 7 || (bitValue != 0 && bitValue != 1)) {
-            throw new IllegalArgumentException("Invalid position or source bit value");
+        if (position < 0 || position > 7 ) {
+            throw new IllegalArgumentException("Invalid position");
+        }
+        
+        if((bitValue != 0 && bitValue != 1)){
+            throw new IllegalArgumentException("Invalid source bit value");
         }
 
+        // Create a mask to clear the bit at the specified position in the target byte.
         byte bitRemoverMask = (byte) ~(1 << position);
         target = (byte) (target & bitRemoverMask);
 
+        // Create a mask to set the bit to the specified value at the specified position.
         byte bitSetterMask = (byte) (bitValue << position);
         target = (byte) (target | bitSetterMask);
 
