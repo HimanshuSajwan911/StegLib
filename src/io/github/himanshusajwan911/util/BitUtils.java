@@ -5,13 +5,32 @@
 
 package io.github.himanshusajwan911.util;
 
+import io.github.himanshusajwan911.util.exceptions.InsufficientBytesException;
+
 /**
- * The {@code BitUtils} class provides utility methods for performing bit-level
- * manipulations on various data types. It offers methods to insert, extract,
- * and modify individual bits within bytes and other data types.
+ * The {@code BitUtils} class provides utility methods for performing bit-level manipulations on
+ * various data types. It offers methods to insert, extract, and modify individual bits within bytes
+ * and other data types.
  *
  */
 public class BitUtils {
+
+    /**
+     * Enumeration representing byte order (endianess) for multi-byte data storage and
+     * interpretation.
+     * <br>
+     * Use {@link #BIG_ENDIAN} for most significant byte first, and {@link #LITTLE_ENDIAN} for least significant byte first.
+     */
+    public enum Endian {
+        /**
+         * Represents big-endian byte order, where the most significant byte is stored first.
+         */
+        BIG_ENDIAN,
+        /**
+         * Represents little-endian byte order, where the least significant byte is stored first.
+         */
+        LITTLE_ENDIAN
+    }
 
     /**
      * Inserts a specified bit value at the given position within a byte.
@@ -20,19 +39,18 @@ public class BitUtils {
      * @param bitValue The bit value (0 or 1) to be inserted.
      * @param position The position (0 to 7) where the bit should be inserted.
      *
-     * @return The modified byte with the specified bit value inserted at the
-     * given position.
+     * @return The modified byte with the specified bit value inserted at the given position.
      *
-     * @throws IllegalArgumentException If the position is out of the valid
-     * range (0 to 7) or if the bitValue is not 0 or 1.
+     * @throws IllegalArgumentException If the position is out of the valid range (0 to 7) or if the
+     * bitValue is not 0 or 1.
      */
     public static byte insertBitAt(byte target, int bitValue, int position) {
 
-        if (position < 0 || position > 7 ) {
+        if (position < 0 || position > 7) {
             throw new IllegalArgumentException("Invalid position");
         }
-        
-        if((bitValue != 0 && bitValue != 1)){
+
+        if ((bitValue != 0 && bitValue != 1)) {
             throw new IllegalArgumentException("Invalid source bit value");
         }
 
@@ -45,6 +63,62 @@ public class BitUtils {
         target = (byte) (target | bitSetterMask);
 
         return target;
+    }
+
+    /**
+     * Inserts all the bits from the bytes in the {@code sourceArray} (starting from
+     * {@code sourceStartIndex} to {@code sourcEndIndex}) into the bytes of the {@code targetArray}
+     * (starting from {@code targetStartIndex} to {@code targetEndIndex}) at the specified
+     * {@code position}.
+     * <p>
+     * Note: The number of bytes in the {@code targetArray} should be at least 8 times that in the
+     * {@code sourceArray} for the given start and end indices. (For example, if the
+     * {@code sourceArray} contains 2 bytes, the {@code targetArray} should have at least 8 * 2 = 16
+     * bytes).</p>
+     *
+     * @param targetArray The byte array where bits will be inserted.
+     * @param targetStartIndex The starting index in the target array for insertion.
+     * @param targetEndIndex The ending index in the target array for insertion.<b>[inclusive]</b>
+     * @param sourceArray The byte array from which bits will be taken for insertion.
+     * @param sourceStartIndex The starting index in the {@code sourceArray} for taking bits.
+     * @param sourceEndIndex The ending index in the {@code sourceArray}for taking
+     * bits.<b>[inclusive]</b>
+     * @param bitPosition The position within each byte of the target array where bits will be
+     * inserted.
+     * @param endian The endian format for bits of {@code sourceArray}. Use
+     * {@code Endian.BIG_ENDIAN} for big-endian and {@code Endian.LITTLE_ENDIAN} for little-endian.
+     *
+     * @throws IllegalArgumentException If any of the provided index values are out of bounds.
+     * @throws InsufficientBytesException If the {@code targetArray} does not have enough capacity
+     * for the required bits.
+     */
+    public static void insertBitsAt(byte[] targetArray, int targetStartIndex, int targetEndIndex,
+            byte[] sourceArray, int sourceStartIndex, int sourceEndIndex, int bitPosition, Endian endian) {
+
+        if (targetStartIndex < 0 || targetStartIndex >= targetArray.length || targetEndIndex < 0
+                || targetEndIndex >= targetArray.length || sourceStartIndex < 0 || sourceStartIndex >= sourceArray.length
+                || sourceEndIndex < 0 || sourceEndIndex >= sourceArray.length) {
+            throw new IllegalArgumentException("Invalid index values: Ensure that target and source indices are within valid bounds.");
+        }
+
+        int targetSize = targetEndIndex - targetStartIndex + 1;
+        int sourceSize = sourceEndIndex - sourceStartIndex + 1;
+
+        if (targetSize < (sourceSize * 8)) {
+            throw new InsufficientBytesException("The target array does not have enough capacity to accommodate the required number of bits.");
+        }
+
+        for (int i = sourceStartIndex; i <= sourceEndIndex; ++i) {
+
+            byte sourceByte = sourceArray[i];
+            for (int j = 7; j >= 0; --j, ++targetStartIndex) {
+                if (endian == Endian.BIG_ENDIAN) {
+                    targetArray[targetStartIndex] = BitUtils.insertBitAt(targetArray[targetStartIndex], ((sourceByte >>> j) & 1), bitPosition);
+                } else if (endian == Endian.LITTLE_ENDIAN) {
+                    targetArray[targetStartIndex] = BitUtils.insertBitAt(targetArray[targetStartIndex], ((sourceByte >>> (7 - j)) & 1), bitPosition);
+                }
+            }
+        }
     }
 
 }
