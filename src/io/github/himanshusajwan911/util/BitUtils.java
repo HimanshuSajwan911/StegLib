@@ -19,7 +19,8 @@ public class BitUtils {
      * Enumeration representing byte order (endianess) for multi-byte data storage and
      * interpretation.
      * <br>
-     * Use {@link #BIG_ENDIAN} for most significant byte first, and {@link #LITTLE_ENDIAN} for least significant byte first.
+     * Use {@link #BIG_ENDIAN} for most significant byte first, and {@link #LITTLE_ENDIAN} for least
+     * significant byte first.
      */
     public enum Endian {
         /**
@@ -119,6 +120,47 @@ public class BitUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Extracts {@code amount} number of bytes from {@code sourceArray} starting from
+     * {@code startIndex}.
+     * <br>
+     * 1 bit is extracted from 1 byte at specified {@code bitPosition} and 8 such bits are combined
+     * together according to specified {@code endian} to make 1 extracted byte.
+     *
+     * @param sourceArray The source byte array from which bits will be extracted.
+     * @param startIndex The index in the source array to start extracting bits from.
+     * @param amount The number of bytes to be extracted (each byte contains 8 bits).
+     * @param bitPosition The starting bit position within each source byte for extraction.
+     * @param endian The endianness (BIG_ENDIAN or LITTLE_ENDIAN) to determine bit order.
+     *
+     * @return A new byte array containing the extracted bytes.
+     *
+     * @throws InsufficientBytesException If the source array does not contain enough bytes to
+     * fulfill the extraction.
+     */
+    public static byte[] extractBitsAt(byte[] sourceArray, int startIndex, int amount, int bitPosition, Endian endian) {
+
+        if ((sourceArray.length - startIndex + 1) < amount * 8) {
+            throw new InsufficientBytesException("source does not contain enough bytes.");
+        }
+
+        byte[] extractedBytesArray = new byte[amount];
+
+        for (int i = 0; i < amount; ++i) {
+            byte extractedByte = 0;
+            for (int j = 0; j <= 7; ++j, ++startIndex) {
+                if (endian == Endian.BIG_ENDIAN) {
+                    extractedByte = (byte) ((extractedByte << 1) | (sourceArray[startIndex] >>> bitPosition) & 1);
+                } else if (endian == Endian.LITTLE_ENDIAN) {
+                    extractedByte = (byte) (extractedByte | ((sourceArray[startIndex] >>> bitPosition) & 1) << j);
+                }
+            }
+            extractedBytesArray[i] = extractedByte;
+        }
+
+        return extractedBytesArray;
     }
 
 }
