@@ -79,33 +79,34 @@ public class BitUtils {
      *
      * @param targetArray The byte array where bits will be inserted.
      * @param targetStartIndex The starting index in the target array for insertion.
-     * @param targetEndIndex The ending index in the target array for insertion.<b>[inclusive]</b>
      * @param sourceArray The byte array from which bits will be taken for insertion.
      * @param sourceStartIndex The starting index in the {@code sourceArray} for taking bits.
-     * @param sourceEndIndex The ending index in the {@code sourceArray}for taking
+     * @param sourceEndIndex The ending index in the {@code sourceArray} for taking
      * bits.<b>[inclusive]</b>
      * @param bitPosition The position within each byte of the target array where bits will be
      * inserted.
-     * @param endian The endian format for bits of {@code sourceArray}. Use
-     * {@code Endian.BIG_ENDIAN} for big-endian and {@code Endian.LITTLE_ENDIAN} for little-endian.
+     * @param endian The endian format for bits of {@code sourceArray}.
+     * <br>
+     * Use {@link BitUtils.Endian#BIG_ENDIAN} for big-endian and
+     * {@link BitUtils.Endian#LITTLE_ENDIAN} for little-endian.
      *
      * @throws IllegalArgumentException If any of the provided index values are out of bounds.
      * @throws InsufficientBytesException If the {@code targetArray} does not have enough capacity
      * for the required bits.
      */
-    public static void insertBitsAt(byte[] targetArray, int targetStartIndex, int targetEndIndex,
+    public static void insertBitsAt(byte[] targetArray, int targetStartIndex,
             byte[] sourceArray, int sourceStartIndex, int sourceEndIndex, int bitPosition, Endian endian) {
 
-        if (targetStartIndex < 0 || targetStartIndex >= targetArray.length || targetEndIndex < 0
-                || targetEndIndex >= targetArray.length || sourceStartIndex < 0 || sourceStartIndex >= sourceArray.length
+        if (targetStartIndex < 0 || targetStartIndex >= targetArray.length
+                || sourceStartIndex < 0 || sourceStartIndex >= sourceArray.length
                 || sourceEndIndex < 0 || sourceEndIndex >= sourceArray.length) {
             throw new IllegalArgumentException("Invalid index values: Ensure that target and source indices are within valid bounds.");
         }
 
-        int targetSize = targetEndIndex - targetStartIndex + 1;
+        int targetCapacity = targetArray.length - targetStartIndex + 1;
         int sourceSize = sourceEndIndex - sourceStartIndex + 1;
 
-        if (targetSize < (sourceSize * 8)) {
+        if (targetCapacity < (sourceSize * 8)) {
             throw new InsufficientBytesException("The target array does not have enough capacity to accommodate the required number of bits.");
         }
 
@@ -114,9 +115,9 @@ public class BitUtils {
             byte sourceByte = sourceArray[i];
             for (int j = 7; j >= 0; --j, ++targetStartIndex) {
                 if (endian == Endian.BIG_ENDIAN) {
-                    targetArray[targetStartIndex] = BitUtils.insertBitAt(targetArray[targetStartIndex], ((sourceByte >>> j) & 1), bitPosition);
+                    targetArray[targetStartIndex] = insertBitAt(targetArray[targetStartIndex], ((sourceByte >>> j) & 1), bitPosition);
                 } else if (endian == Endian.LITTLE_ENDIAN) {
-                    targetArray[targetStartIndex] = BitUtils.insertBitAt(targetArray[targetStartIndex], ((sourceByte >>> (7 - j)) & 1), bitPosition);
+                    targetArray[targetStartIndex] = insertBitAt(targetArray[targetStartIndex], ((sourceByte >>> (7 - j)) & 1), bitPosition);
                 }
             }
         }
