@@ -103,7 +103,7 @@ public class BitUtils {
             throw new IllegalArgumentException("Invalid index values: Ensure that target and source indices are within valid bounds.");
         }
 
-        int targetCapacity = targetArray.length - targetStartIndex + 1;
+        int targetCapacity = targetArray.length - targetStartIndex;
         int sourceSize = sourceEndIndex - sourceStartIndex + 1;
 
         if (targetCapacity < (sourceSize * 8)) {
