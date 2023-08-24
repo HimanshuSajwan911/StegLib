@@ -143,7 +143,7 @@ public class BitUtils {
      */
     public static byte[] extractBitsAt(byte[] sourceArray, int startIndex, int amount, int bitPosition, Endian endian) {
 
-        if ((sourceArray.length - startIndex + 1) < amount * 8) {
+        if ((sourceArray.length - startIndex) < amount * 8) {
             throw new InsufficientBytesException("source does not contain enough bytes.");
         }
 
