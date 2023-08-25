@@ -164,4 +164,43 @@ public class BitUtils {
         return extractedBytesArray;
     }
 
+    public static void insertIntegerAt(byte[] targetArray, int startIndex, int bitPosition, int value, Endian endian) {
+        byte[] integerBytes = Converter.intToBytes(value);
+        insertBitsAt(targetArray, startIndex, integerBytes, 0, integerBytes.length - 1, bitPosition, endian);
+    }
+
+    public static int extractIntegerAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian) {
+        byte[] extractedIntegerBytes = extractBitsAt(sourceArray, startIndex, Integer.BYTES, bitPosition, endian);
+        return Converter.bytesToInt(extractedIntegerBytes);
+    }
+
+    public static void insertFloatAt(byte[] targetArray, int startIndex, int bitPosition, float value, Endian endian) {
+        byte[] floatBytes = Converter.floatToBytes(value);
+        insertBitsAt(targetArray, startIndex, floatBytes, 0, floatBytes.length - 1, bitPosition, endian);
+    }
+    
+    public static float extractFloatAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian){
+        byte[] extractedFloatBytes = extractBitsAt(sourceArray, startIndex, Float.BYTES, bitPosition, endian);
+        return Converter.bytesToFloat(extractedFloatBytes);
+    }
+    
+    public static void insertLongAt(byte[] targetArray, int startIndex, int bitPosition, long value, Endian endian){
+        byte[] longBytes = Converter.longToBytes(value);
+        insertBitsAt(targetArray, startIndex, longBytes, 0, longBytes.length - 1, bitPosition, endian);
+    }
+    
+    public static long extractLongAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian){
+        byte[] extractedLongBytes = extractBitsAt(sourceArray, startIndex, Long.BYTES, bitPosition, endian);
+        return Converter.bytesToLong(extractedLongBytes);
+    }
+    
+    public static void insertDoubleAt(byte[] targetArray, int startIndex, int bitPosition, double value, Endian endian){
+        byte[] doubleBytes = Converter.doubleToBytes(value);
+        insertBitsAt(targetArray, startIndex, doubleBytes, 0, doubleBytes.length - 1, bitPosition, endian);
+    }
+    
+    public static double extractDoubleAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian){
+        byte[] extractedDoubleBytes = extractBitsAt(sourceArray, startIndex, Double.BYTES, bitPosition, BitUtils.Endian.BIG_ENDIAN);
+        return Converter.bytesToDouble(extractedDoubleBytes);
+    }
 }
