@@ -164,42 +164,159 @@ public class BitUtils {
         return extractedBytesArray;
     }
 
+    /**
+     * Inserts the bits of an integer value into a byte array at the specified index and bit
+     * position.
+     *
+     * @param targetArray The byte array where the bits will be inserted.
+     * @param startIndex The starting index in the target array for insertion.
+     * @param bitPosition The position within each byte of the target array where bits will be
+     * inserted.
+     * @param value The integer value whose bits will be inserted.
+     * @param endian The byte order (endianess) for the insertion.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the target array does not have enough capacity for the
+     * integer bits.
+     */
     public static void insertIntegerAt(byte[] targetArray, int startIndex, int bitPosition, int value, Endian endian) {
         byte[] integerBytes = Converter.intToBytes(value);
         insertBitsAt(targetArray, startIndex, integerBytes, 0, integerBytes.length - 1, bitPosition, endian);
     }
 
+    /**
+     * Extracts an integer value from a byte array at the specified index and bit position.
+     *
+     * @param sourceArray The byte array from which the bits will be extracted.
+     * @param startIndex The starting index in the source array for extraction.
+     * @param bitPosition The position within each byte of the source array where extraction starts.
+     * @param endian The byte order (endianess) for the extraction.
+     *
+     * @return The extracted integer value.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the source array does not have enough capacity for the
+     * extraction.
+     */
     public static int extractIntegerAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian) {
         byte[] extractedIntegerBytes = extractBitsAt(sourceArray, startIndex, Integer.BYTES, bitPosition, endian);
         return Converter.bytesToInt(extractedIntegerBytes);
     }
 
+    /**
+     * Inserts the bits of a floating-point value into a byte array at the specified index and bit
+     * position.
+     *
+     * @param targetArray The byte array where the bits will be inserted.
+     * @param startIndex The starting index in the target array for insertion.
+     * @param bitPosition The position within each byte of the target array where bits will be
+     * inserted.
+     * @param value The floating-point value whose bits will be inserted.
+     * @param endian The byte order (endianess) for the insertion.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the target array does not have enough capacity for the
+     * inserted bits.
+     */
     public static void insertFloatAt(byte[] targetArray, int startIndex, int bitPosition, float value, Endian endian) {
         byte[] floatBytes = Converter.floatToBytes(value);
         insertBitsAt(targetArray, startIndex, floatBytes, 0, floatBytes.length - 1, bitPosition, endian);
     }
-    
-    public static float extractFloatAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian){
+
+    /**
+     * Extracts a floating-point value from a byte array at the specified index and bit position.
+     *
+     * @param sourceArray The byte array from which the bits will be extracted.
+     * @param startIndex The starting index in the source array for extraction.
+     * @param bitPosition The position within each byte of the source array where extraction starts.
+     * @param endian The byte order (endianess) for the extraction.
+     *
+     * @return The extracted floating-point value.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the source array does not have enough capacity for the
+     * extraction.
+     */
+    public static float extractFloatAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian) {
         byte[] extractedFloatBytes = extractBitsAt(sourceArray, startIndex, Float.BYTES, bitPosition, endian);
         return Converter.bytesToFloat(extractedFloatBytes);
     }
-    
-    public static void insertLongAt(byte[] targetArray, int startIndex, int bitPosition, long value, Endian endian){
+
+    /**
+     * Inserts the bits of a long integer value into a byte array at the specified index and bit
+     * position.
+     *
+     * @param targetArray The byte array where the bits will be inserted.
+     * @param startIndex The starting index in the target array for insertion.
+     * @param bitPosition The position within each byte of the target array where bits will be
+     * inserted.
+     * @param value The long integer value whose bits will be inserted.
+     * @param endian The byte order (endianess) for the insertion.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the target array does not have enough capacity for the
+     * inserted bits.
+     */
+    public static void insertLongAt(byte[] targetArray, int startIndex, int bitPosition, long value, Endian endian) {
         byte[] longBytes = Converter.longToBytes(value);
         insertBitsAt(targetArray, startIndex, longBytes, 0, longBytes.length - 1, bitPosition, endian);
     }
-    
-    public static long extractLongAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian){
+
+    /**
+     * Extracts a long integer value from a byte array at the specified index and bit position.
+     *
+     * @param sourceArray The byte array from which the bits will be extracted.
+     * @param startIndex The starting index in the source array for extraction.
+     * @param bitPosition The position within each byte of the source array where extraction starts.
+     * @param endian The byte order (endianess) for the extraction.
+     *
+     * @return The extracted long integer value.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the source array does not have enough capacity for the
+     * extraction.
+     */
+    public static long extractLongAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian) {
         byte[] extractedLongBytes = extractBitsAt(sourceArray, startIndex, Long.BYTES, bitPosition, endian);
         return Converter.bytesToLong(extractedLongBytes);
     }
-    
-    public static void insertDoubleAt(byte[] targetArray, int startIndex, int bitPosition, double value, Endian endian){
+
+    /**
+     * Inserts the bits of a double-precision floating-point value into a byte array at the
+     * specified index and bit position.
+     *
+     * @param targetArray The byte array where the bits will be inserted.
+     * @param startIndex The starting index in the target array for insertion.
+     * @param bitPosition The position within each byte of the target array where bits will be
+     * inserted.
+     * @param value The double-precision floating-point value whose bits will be inserted.
+     * @param endian The byte order (endianess) for the insertion.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the target array does not have enough capacity for the
+     * inserted bits.
+     */
+    public static void insertDoubleAt(byte[] targetArray, int startIndex, int bitPosition, double value, Endian endian) {
         byte[] doubleBytes = Converter.doubleToBytes(value);
         insertBitsAt(targetArray, startIndex, doubleBytes, 0, doubleBytes.length - 1, bitPosition, endian);
     }
-    
-    public static double extractDoubleAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian){
+
+    /**
+     * Extracts a double-precision floating-point value from a byte array at the specified index and
+     * bit position.
+     *
+     * @param sourceArray The byte array from which the bits will be extracted.
+     * @param startIndex The starting index in the source array for extraction.
+     * @param bitPosition The position within each byte of the source array where extraction starts.
+     * @param endian The byte order (endianess) for the extraction.
+     *
+     * @return The extracted double-precision floating-point value.
+     *
+     * @throws IllegalArgumentException If the startIndex or bitPosition is out of bounds.
+     * @throws InsufficientBytesException If the source array does not have enough capacity for the
+     * extraction.
+     */
+    public static double extractDoubleAt(byte[] sourceArray, int startIndex, int bitPosition, Endian endian) {
         byte[] extractedDoubleBytes = extractBitsAt(sourceArray, startIndex, Double.BYTES, bitPosition, BitUtils.Endian.BIG_ENDIAN);
         return Converter.bytesToDouble(extractedDoubleBytes);
     }
