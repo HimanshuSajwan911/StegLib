@@ -21,7 +21,51 @@ public class Steganography {
     public static final int INVALID_PASSWORD = 3;
 
     
-   
+   /**
+     * Encodes a password into a sequence of bytes using the provided StegOptions and writes them to
+     * a BufferedOutputStream.
+     *
+     * @param input The source BufferedInputStream to read bytes from for additional data.
+     * @param output The BufferedOutputStream to write the encoded password bytes to.
+     * @param options The StegOptions containing configuration parameters for encoding.
+     *
+     * @throws IOException If an I/O error occurs during reading, encoding, or writing operations.
+     */
+    protected void encodePassword(BufferedInputStream input, BufferedOutputStream output, StegOptions options) throws IOException {
+
+        int passwordLength = options.getPassword().length();
+        encodeInteger(input, output, options.getHiddenBitPosition(), options.getStartingEndian(), passwordLength);
+        
+        byte[] passwordBytes = options.getPassword().getBytes();
+        byte[] buffer = new byte[passwordLength * 8];
+        input.read(buffer);
+        
+        BitUtils.insertBitsAt(buffer, 0, passwordBytes, 0, passwordBytes.length - 1, options.getHiddenBitPosition(), options.getStartingEndian());
+        
+        output.write(buffer);
+    }
+    
+    /**
+     * Decodes a password from a sequence of bytes using the provided StegOptions and returns it as
+     * a String.
+     *
+     * @param input The source BufferedInputStream to read the encoded password bytes from.
+     * @param options The StegOptions containing configuration parameters for decoding.
+     *
+     * @return The decoded password as a String.
+     * @throws IOException If an I/O error occurs during reading or decoding operations.
+     */
+    protected String decodePassword(BufferedInputStream input, StegOptions options) throws IOException {
+
+        int extractedPasswordLength = decodeInteger(input, options.getHiddenBitPosition(), options.getStartingEndian());
+
+        byte[] buffer = new byte[extractedPasswordLength * 8];
+        input.read(buffer);
+
+        byte[] extractedPasswordBytes = BitUtils.extractBitsAt(buffer, 0, extractedPasswordLength, options.getHiddenBitPosition(), options.getStartingEndian());
+
+        return new String(extractedPasswordBytes);
+    }
 
     /**
      * Encodes an integer value into a sequence of bytes read from a source BufferedInputStream,
