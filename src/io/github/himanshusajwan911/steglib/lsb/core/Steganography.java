@@ -21,6 +21,31 @@ public class Steganography {
     public static final int INVALID_PASSWORD = 3;
 
     
+
+    /**
+     * Skips a specified amount of data from a source BufferedInputStream and writes it to a target
+     * BufferedOutputStream.
+     *
+     * @param input The source BufferedInputStream to read data from.
+     * @param output The target BufferedOutputStream to write data to.
+     * @param amount The number of bytes to skip and transfer.
+     *
+     * @throws IOException If an I/O error occurs during reading or writing operations.
+     */
+    protected void skip(BufferedInputStream input, BufferedOutputStream output, int amount) throws IOException {
+
+        byte[] buffer = new byte[amount];
+
+        if (input != null) {
+            input.read(buffer);
+        }
+
+        if (output != null) {
+            output.write(buffer);
+        }
+
+    }
+
    /**
      * Encodes a password into a sequence of bytes using the provided StegOptions and writes them to
      * a BufferedOutputStream.
