@@ -69,7 +69,7 @@ public class BitUtils {
     /**
      * Inserts all the bits from the bytes in the {@code sourceArray} (starting from
      * {@code sourceStartIndex} to {@code sourcEndIndex}) into the bytes of the {@code targetArray}
-     * (starting from {@code targetStartIndex} to {@code targetEndIndex}) at the specified
+     * (starting from {@code targetStartIndex}) at the specified
      * {@code position}.
      * <p>
      * Note: The number of bytes in the {@code targetArray} should be at least 8 times that in the
@@ -105,7 +105,7 @@ public class BitUtils {
 
         int targetCapacity = targetArray.length - targetStartIndex;
         int sourceSize = sourceEndIndex - sourceStartIndex + 1;
-
+        
         if (targetCapacity < (sourceSize * 8)) {
             throw new InsufficientBytesException("The target array does not have enough capacity to accommodate the required number of bits.");
         }
@@ -121,6 +121,25 @@ public class BitUtils {
                 }
             }
         }
+    }
+    
+    /**
+     * Extracts a specific bit from a byte value at the given bit position.
+     *
+     * @param value The byte value from which to extract the bit.
+     * @param bitPosition The position of the bit to extract (0-7).
+     * 
+     * @return The extracted bit value, either 0 or 1.
+     * 
+     * @throws IllegalArgumentException If the bitPosition is not in the range [0-7].
+     */
+    public static int extractBitAt(byte value, int bitPosition) {
+
+        if (bitPosition < 0 || bitPosition > 7) {
+            throw new IllegalArgumentException("bitPosition should be between [0-7]");
+        }
+        
+        return (value >>> bitPosition) & 1;
     }
 
     /**
