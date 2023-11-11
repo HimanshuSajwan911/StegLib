@@ -45,6 +45,43 @@ public class Steganography {
         }
 
     }
+    
+    /**
+     * Reads a byte from the input stream (referred to as the password byte), sets the specified
+     * {@code bitValue} at the given {@code bitPosition} in the password byte, and writes this byte
+     * to the output stream.
+     *
+     * @param input The input stream from which to read the original password byte.
+     * @param output The output stream to which the modified password byte is written.
+     * @param bitValue The value (0 or 1) to set at the specified bit position.
+     * <br>1 indicates a password is set, 0 indicates no password is set.
+     * @param bitPosition The position at which the password bit is set, ranging from 0 to 7.
+     * @throws IOException If an I/O error occurs while reading.
+     */
+    protected void setPasswordBit(BufferedInputStream input, BufferedOutputStream output, int bitValue, int bitPosition) throws IOException {
+        
+        byte passwordByte = (byte) input.read();
+        passwordByte = BitUtils.insertBitAt(passwordByte, bitValue, bitPosition);
+        
+        output.write(passwordByte);
+    }
+    
+    /**
+     * Reads a byte from the input stream (referred to as the password byte) and extracts the bit
+     * value at the specified {@code bitPosition}.
+     *
+     * @param input The input stream from which to read the password byte.
+     * @param bitPosition The position at which to extract the bit value, ranging from 0 to 7.
+     * 
+     * @return The extracted bit value (0 or 1) at the specified bit position.
+     * <br>1 indicates a password is set, 0 indicates no password is set.
+     * @throws IOException If an I/O error occurs while reading.
+     */
+    protected int getPasswordBit(BufferedInputStream input, int bitPosition) throws IOException{
+        byte passwordByte = (byte) input.read();
+        
+        return BitUtils.extractBitAt(passwordByte, bitPosition);
+    }
 
    /**
      * Encodes a password into a sequence of bytes using the provided StegOptions and writes them to
