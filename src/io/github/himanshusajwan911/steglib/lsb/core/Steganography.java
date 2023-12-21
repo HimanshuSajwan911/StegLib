@@ -9,10 +9,13 @@ import io.github.himanshusajwan911.steglib.lsb.core.util.EncodeValidationResult;
 import io.github.himanshusajwan911.steglib.lsb.core.util.MultiEncodeSteg;
 import io.github.himanshusajwan911.util.BitUtils;
 import io.github.himanshusajwan911.util.BitUtils.Endian;
+import io.github.himanshusajwan911.util.exceptions.InsufficientBytesException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -25,6 +28,109 @@ public class Steganography {
     public static final int INVALID_PASSWORD = 2;
     
     
+    /**
+     * Encodes a specified amount of data bytes from the given BufferedInputStream object into the
+     * provided cover file using the provided {@link StegOptions}. The encoded data is then written
+     * to the specified destination.
+     *
+     * @param coverFilePath The path of the cover file to hide data within.
+     * @param dataBufferedInputStream The BufferedInputStream containing the data to be hidden
+     * within the cover file.
+     * @param dataAmountToEncode The amount of data (in bytes) to encode from the
+     * dataBufferedInputStream. This determines the size of the hidden payload in the Steganographic
+     * result.
+     * @param destinationPath The path of the destination file where the encoded file will be
+     * stored.
+     * @param options StegOptions containing parameters for encoding.
+     *
+     * @return {@link ENCODING_SUCCESSFUL} for successful encoding.
+     *
+     * @throws FileNotFoundException If the specified cover file is not found.
+     * @throws IOException If an I/O error occurs while reading or writing files.
+     */
+    protected int encode(String coverFilePath, BufferedInputStream dataBufferedInputStream, long dataAmountToEncode, String destinationPath, StegOptions options) throws FileNotFoundException, IOException {
+        
+        int dataAvailable = dataBufferedInputStream.available();
+        // setting dataAmountToEncode to minimum of dataAmountToEncode and dataAvailable to encode.
+        dataAmountToEncode = Math.min(dataAmountToEncode, dataAvailable);
+        
+        EncodeValidationResult validator = validateEncoding(coverFilePath, dataAmountToEncode, options);
+        
+        if (validator.getTotalBytesRequired() > validator.getCoverFileSize()) {
+            throw new InsufficientBytesException("Not enough bytes in Cover File, Total Bytes Required: " + validator.getTotalBytesRequired());
+        }
+
+        try (
+                BufferedInputStream coverBufferedInputStream = new BufferedInputStream(new FileInputStream(coverFilePath)); 
+                BufferedOutputStream destinationBufferedOutputStream = new BufferedOutputStream(new FileOutputStream(destinationPath))) {
+
+            //skipping offset amount of bytes from encoing.
+            skip(coverBufferedInputStream, destinationBufferedOutputStream, options.getInitialOffset());
+            
+            if (!options.getPassword().isEmpty()) {
+                // setting password bit as 1(true).
+                setPasswordBit(coverBufferedInputStream, destinationBufferedOutputStream, 1, 0);
+                //adding password to output file.
+                encodePassword(coverBufferedInputStream, destinationBufferedOutputStream, options);
+            }
+            else{
+                // setting password bit as 0(false).
+                setPasswordBit(coverBufferedInputStream, destinationBufferedOutputStream, 0, 0);
+            }
+            
+            //adding data file size to output file.
+            encodeLong(coverBufferedInputStream, destinationBufferedOutputStream, options.getHiddenBitPosition(), options.getStartingEndian(), dataAmountToEncode);
+            
+            byte[] dataBuffer = new byte[options.getDataBlockSize()];
+            byte[] coverBuffer = new byte[options.getDataBlockSize() * 8 + options.getByteSkipPerBlock()];
+            
+            int coverBytesRead = 0, dataBytesRead;
+            int dataBlockCount = 0;
+            Endian endian = options.getStartingEndian();
+            long dataEncoded = 0;
+            int coverBytesToRead;
+
+            while(dataEncoded < dataAmountToEncode ){
+                
+                if((dataEncoded + dataBuffer.length) > dataAmountToEncode){
+                    int newDataBufferSize = (int) (dataAmountToEncode - dataEncoded);
+                    dataBuffer = new byte[newDataBufferSize];
+                }
+                
+                dataBytesRead = dataBufferedInputStream.read(dataBuffer);
+                if(dataBytesRead == -1){
+                    break;
+                }
+                
+                coverBytesToRead = dataBytesRead * 8 + options.getByteSkipPerBlock();
+                coverBytesRead = coverBufferedInputStream.read(coverBuffer, 0, coverBytesToRead);
+                
+                BitUtils.insertBitsAt(coverBuffer, 0, dataBuffer, 0, dataBytesRead - 1, options.getHiddenBitPosition(), endian);
+                destinationBufferedOutputStream.write(coverBuffer, 0, coverBytesRead);
+                
+                dataEncoded += dataBytesRead;
+
+                // changing endianess according to given EndianChangeFrequency.
+                if (++dataBlockCount == options.getEndianChangeFrequency()) {
+                    if (endian == Endian.BIG_ENDIAN) {
+                        endian = Endian.LITTLE_ENDIAN;
+                    } else {
+                        endian = Endian.BIG_ENDIAN;
+                    }
+                    
+                    dataBlockCount = 0;
+                }
+            }
+            
+            coverBuffer = new byte[BUFFER_SIZE];
+            // copying remaining byte from cover file.
+            while ((coverBytesRead = coverBufferedInputStream.read(coverBuffer)) != -1) {
+                destinationBufferedOutputStream.write(coverBuffer, 0, coverBytesRead);
+            }
+        }   
+        
+        return ENCODING_SUCCESSFUL;
+    }
     
     /**
      * Calculates the amount of bytes which can be used for encoding process ie actual data bytes
