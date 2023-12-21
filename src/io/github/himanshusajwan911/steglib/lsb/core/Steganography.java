@@ -5,23 +5,133 @@
 
 package io.github.himanshusajwan911.steglib.lsb.core;
 
+import io.github.himanshusajwan911.steglib.lsb.core.util.EncodeValidationResult;
+import io.github.himanshusajwan911.steglib.lsb.core.util.MultiEncodeSteg;
 import io.github.himanshusajwan911.util.BitUtils;
 import io.github.himanshusajwan911.util.BitUtils.Endian;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Steganography {
 
     protected static final int BUFFER_SIZE = 8192; // 8 KB
     
     public static final int ENCODING_SUCCESSFUL = 0;
-    public static final int ENCODING_FAILED = 1;
-    public static final int DECODING_SUCCESSFUL = 2;
-    public static final int INVALID_PASSWORD = 3;
-
+    public static final int DECODING_SUCCESSFUL = 1;
+    public static final int INVALID_PASSWORD = 2;
     
+    
+    
+    /**
+     * Calculates the amount of bytes which can be used for encoding process ie actual data bytes
+     * not metadata of cover file.
+     *
+     * @param coverFilePath The file path of the cover file.
+     *
+     * @return The size of the cover file in bytes.
+     *
+     * @throws FileNotFoundException If the specified cover file is not found.
+     */
+    protected long getCoverFileSize(String coverFilePath) throws FileNotFoundException{
+        File coverFile = new File(coverFilePath);
+        
+        if (!coverFile.exists()) {
+            throw new FileNotFoundException("Cannot find the cover file specified.");
+        }
+        
+        return coverFile.length();
+    }
+    
+    /**
+     * Validates encoding parameters based on the specified cover file, cover file size, and
+     * StegOptions.
+     *
+     * @param coverFilePath The file path of the cover file.
+     * @param dataFilePath The file path of the data file.
+     * @param options The encoding options.
+     *
+     * @return An {@code EncodeValidationResult} containing calculated parameters for the encoding
+     * process.
+     * @throws FileNotFoundException If the specified cover file is not found.
+     */
+    public EncodeValidationResult validateEncoding(String coverFilePath, String dataFilePath, StegOptions options) throws FileNotFoundException {
 
+        File dataFile = new File(dataFilePath);
+
+        if (!dataFile.exists()) {
+            throw new FileNotFoundException("Cannot find the data file specified.");
+        }
+
+        return validateEncoding(coverFilePath, dataFile.length(), options);
+    }
+
+    /**
+     * Validates encoding parameters based on the specified cover file, data amount to encode, and
+     * StegOptions.
+     *
+     * @param coverFilePath The file path of the cover file.
+     * @param dataAmountToEncode The amount of data in bytes to be encoded.
+     * @param options The encoding options.
+     * @return An {@code EncodeValidationResult} containing calculated parameters for the encoding
+     * process.
+     * @throws FileNotFoundException If the specified cover file is not found.
+     */
+    public EncodeValidationResult validateEncoding(String coverFilePath, long dataAmountToEncode, StegOptions options) throws FileNotFoundException {
+
+        long coverSize = getCoverFileSize(coverFilePath);
+
+        // intial size 1 to store password bit.
+        int passwordSize = 1;
+        if (options.getPassword().length() > 0) {
+            // +32 because password length is also stored using 32 bit integer.
+            passwordSize = (options.getPassword().length() * 8 + 32);
+        }
+
+        int numberOfDataBlock = (int) ((dataAmountToEncode - 1) / options.getDataBlockSize() + 1);
+
+        // (numberOfDataBlock - 1) Because, after processing the final data block, no bytes will be skipped.
+        int totalByteSkip = (numberOfDataBlock - 1) * options.getByteSkipPerBlock();
+
+        // +64 bytes to store data file size.
+        long totalBytesRequired = (dataAmountToEncode * 8) + totalByteSkip + options.getInitialOffset() + passwordSize + 64;
+
+        EncodeValidationResult result = new EncodeValidationResult();
+        result.setNumberOfDataBlock(numberOfDataBlock);
+        result.setPasswordSize(passwordSize);
+        result.setTotalByteSkip(totalByteSkip);
+        result.setTotalBytesRequired(totalBytesRequired);
+        result.setCoverFileSize(coverSize);
+
+        return result;
+    }
+
+    /**
+     * Validates encoding parameters for a list of MultiEncodeSteg instances.
+     *
+     * @param multiEncodeList The list of MultiEncodeSteg instances containing cover file paths,
+     * data amounts to encode, and encoding options.
+     * 
+     * @return An array of EncodeValidationResult instances, each corresponding to a
+     * MultiEncodeSteg.
+     * 
+     * @throws FileNotFoundException If any specified cover file is not found.
+     */
+    public EncodeValidationResult[] validateEncoding(ArrayList<MultiEncodeSteg> multiEncodeList) throws FileNotFoundException {
+
+        EncodeValidationResult[] result = new EncodeValidationResult[multiEncodeList.size()];
+
+        for (int i = 0; i < multiEncodeList.size(); ++i) {
+            MultiEncodeSteg mes = multiEncodeList.get(i);
+            result[i] = validateEncoding(mes.getCoverFilePath(), mes.getDataAmountToEncode(), mes.getOptions());
+        }
+
+        return result;
+    }
+    
     /**
      * Skips a specified amount of data from a source BufferedInputStream and writes it to a target
      * BufferedOutputStream.
@@ -207,5 +317,5 @@ public class Steganography {
 
         return BitUtils.extractLongAt(buffer, 0, bitPosition, endian);
     }
-    
+
 }
