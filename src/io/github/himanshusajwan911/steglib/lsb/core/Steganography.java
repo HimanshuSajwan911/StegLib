@@ -132,6 +132,82 @@ public class Steganography {
         return ENCODING_SUCCESSFUL;
     }
     
+     /**
+     * Decodes the Steganographically hidden data from the specified encoded file and writes it to
+     * the provided output stream using the provided {@code StegOptions}.
+     *
+     * @param encodedFilePath The path of the encoded file containing hidden data.
+     * @param destinationBufferedOutputStream The BufferedOutputStream where the decoded data will
+     * be written.
+     * @param options StegOptions containing parameters for decoding.
+     *
+     * @return {@link DECODING_SUCCESSFUL} if the decoding process is successful.
+     * <br>{@link INVALID_PASSWORD} if the decoding process fails due to an incorrect password.
+     *
+     * @throws FileNotFoundException If the specified encoded file is not found.
+     * @throws IOException If an I/O error occurs while reading or writing files.
+     */   
+    protected int decode(String encodedFilePath, BufferedOutputStream destinationBufferedOutputStream, StegOptions options) throws IOException {
+
+        File encodedFile = new File(encodedFilePath);
+
+        if (!encodedFile.exists()) {
+            throw new FileNotFoundException("Cannot find the encoded file specified.");
+        }
+
+        try (
+                BufferedInputStream encodedFileBufferedInputStream = new BufferedInputStream(new FileInputStream(encodedFilePath));) {
+
+            //skipping offset amount of bytes from encodedFileBufferedInputStream.
+            skip(encodedFileBufferedInputStream, null, options.getInitialOffset());
+
+            int decodedPasswordBit = getPasswordBit(encodedFileBufferedInputStream, 0);
+
+            if (decodedPasswordBit == 1 && options.getPassword().isEmpty()
+                    || decodedPasswordBit == 0 && !options.getPassword().isEmpty()) {
+                return INVALID_PASSWORD;
+            } else if (decodedPasswordBit == 1 && !options.getPassword().isEmpty()) {
+                String decodedPasswrod = decodePassword(encodedFileBufferedInputStream, options);
+                if (!decodedPasswrod.equals(options.getPassword())) {
+                    return INVALID_PASSWORD;
+                }
+            }
+
+            long hiddenFileSize = decodeLong(encodedFileBufferedInputStream, options.getHiddenBitPosition(), options.getStartingEndian());
+            
+            int bufferSize = (options.getDataBlockSize() * 8) + options.getByteSkipPerBlock();
+            byte[] buffer = new byte[bufferSize];
+            int amount = options.getDataBlockSize();
+            int dataBlockCount = 0;
+            Endian endian = options.getStartingEndian();
+
+            while (hiddenFileSize > 0 && encodedFileBufferedInputStream.read(buffer) != -1) {
+
+                if (hiddenFileSize < amount) {
+                    amount = (int) hiddenFileSize;
+                }
+
+                byte[] decodedData = BitUtils.extractBitsAt(buffer, 0, amount, options.getHiddenBitPosition(), endian);
+                destinationBufferedOutputStream.write(decodedData);
+                hiddenFileSize -= amount;
+
+                // if count of encoded data block is equal to given Endian change frequency.
+                if (++dataBlockCount == options.getEndianChangeFrequency()) {
+                    // change the endianess.
+                    if (endian == Endian.BIG_ENDIAN) {
+                        endian = Endian.LITTLE_ENDIAN;
+                    } else {
+                        endian = Endian.BIG_ENDIAN;
+                    }
+                    
+                    dataBlockCount = 0;
+                }
+            }
+        }
+
+        return DECODING_SUCCESSFUL;
+    }
+    
     /**
      * Calculates the amount of bytes which can be used for encoding process ie actual data bytes
      * not metadata of cover file.
