@@ -6,6 +6,7 @@
 package io.github.himanshusajwan911.steglib.lsb.core;
 
 import io.github.himanshusajwan911.steglib.lsb.core.util.EncodeValidationResult;
+import io.github.himanshusajwan911.steglib.lsb.core.util.MultiDecodeSteg;
 import io.github.himanshusajwan911.steglib.lsb.core.util.MultiEncodeSteg;
 import io.github.himanshusajwan911.util.BitUtils;
 import io.github.himanshusajwan911.util.BitUtils.Endian;
@@ -27,6 +28,93 @@ public class Steganography {
     public static final int DECODING_SUCCESSFUL = 1;
     public static final int INVALID_PASSWORD = 2;
     
+    
+    /**
+     * Encodes the data from the given data file into the given cover file using the provided
+     * {@link StegOptions}. The encoded data is written to the specified destination.
+     *
+     * @param coverFilePath The path of the cover file to hide data within.
+     * @param dataFilePath The path of the data file to be hidden within the cover file.
+     * @param destinationPath The path of the destination file where the encoded file will be
+     * stored.
+     * @param options StegOptions containing parameters for encoding.
+     *
+     * @return {@link ENCODING_SUCCESSFUL} for successful encoding.
+     *
+     * @throws FileNotFoundException If the specified cover or data file is not found.
+     * @throws IOException If an I/O error occurs while reading or writing files.
+     */
+    public int encode(String coverFilePath, String dataFilePath, String destinationPath, StegOptions options) throws FileNotFoundException, IOException {
+
+        try (
+                BufferedInputStream dataBufferedInputStream = new BufferedInputStream(new FileInputStream(dataFilePath))) {
+
+            File dataFile = new File(dataFilePath);
+            long size = dataFile.length();
+
+            return encode(coverFilePath, dataBufferedInputStream, size, destinationPath, options);
+        }
+    }
+    
+    /**
+     * Encodes the data from the specified data file into the given cover file using default
+     * {@link StegOptions}. The encoded data is written to the specified destination.
+     *
+     * @param coverFilePath The path of the cover file to hide data within.
+     * @param dataFilePath The path of the data file to be hidden within the cover file.
+     * @param destinationPath The path of the destination file where the encoded file will be
+     * stored.
+     *
+     * @return {@link ENCODING_SUCCESSFUL} for successful encoding.
+     *
+     * @throws FileNotFoundException If the specified cover or data file is not found.
+     * @throws IOException If an I/O error occurs while reading or writing files.
+     */
+    public int encode(String coverFilePath, String dataFilePath, String destinationPath) throws FileNotFoundException, IOException {
+
+        return encode(coverFilePath, dataFilePath, destinationPath, new StegOptions());
+    }
+    
+    /**
+     * Encodes a specified amount of data bytes from the given data file path into multiple cover
+     * files. The encoding parameters, such as the amount of data to encode, cover file paths, and
+     * destination paths, are defined in MultiEncodeSteg objects provided in the multiEncodeList.
+     *
+     * @param multiEncodeList A list of MultiEncodeSteg objects, each containing data amount to
+     * encode, which cover file to use and where to save the encoded file.
+     * @param dataFilePath The path of the data file to be hidden within the cover files
+     *
+     * @return {@link ENCODING_SUCCESSFUL} for successful encoding.
+     *
+     * @throws FileNotFoundException If the specified data file is not found.
+     * @throws IOException If an I/O error occurs during the encoding process.
+     * @throws IllegalArgumentException If the total amount of data to encode exceeds the size of
+     * the data file.
+     */
+    public int encode(ArrayList<MultiEncodeSteg> multiEncodeList, String dataFilePath) throws FileNotFoundException, IOException {
+
+        File dataFile = new File(dataFilePath);
+        long dataSize = dataFile.length();
+        
+        long totalDataAmountToEncode = 0;
+        for (MultiEncodeSteg mes : multiEncodeList) {
+            totalDataAmountToEncode += mes.getDataAmountToEncode();
+        }
+
+        if (totalDataAmountToEncode > dataSize) {
+            throw new IllegalArgumentException("dataAmountToEncode cannot exceed data file size.");
+        }
+
+        try (
+                BufferedInputStream dataBufferedInputStream = new BufferedInputStream(new FileInputStream(dataFile));) {
+
+            for (MultiEncodeSteg mcs : multiEncodeList) {
+                encode(mcs.getCoverFilePath(), dataBufferedInputStream, mcs.getDataAmountToEncode(), mcs.getDestinationPath(), mcs.getOptions());
+            }
+        }
+
+        return ENCODING_SUCCESSFUL;
+    }
     
     /**
      * Encodes a specified amount of data bytes from the given BufferedInputStream object into the
@@ -130,6 +218,85 @@ public class Steganography {
         }   
         
         return ENCODING_SUCCESSFUL;
+    }
+    
+    /**
+     * Decodes the Steganographically hidden data from the specified encoded file and writes it to
+     * the destination file using the provided {@code StegOptions}.
+     *
+     * @param encodedFilePath The path of the encoded file containing hidden data.
+     * @param destinationPath The path of the destination file where the decoded data will be
+     * stored.
+     * @param options StegOptions containing parameters for decoding.
+     *
+     * @return {@link DECODING_SUCCESSFUL} if the decoding process is successful.
+     * <br>{@link INVALID_PASSWORD} if the decoding process fails due to an incorrect password.
+     *
+     * @throws FileNotFoundException If the specified encoded file is not found.
+     * @throws IOException If an I/O error occurs while reading or writing files.
+     */
+    public int decode(String encodedFilePath, String destinationPath, StegOptions options) throws IOException {
+
+        File encodedFile = new File(encodedFilePath);
+
+        if (!encodedFile.exists()) {
+            throw new FileNotFoundException("Cannot find the encoded file specified.");
+        }
+
+        try (
+                BufferedOutputStream destinationBufferedOutputStream = new BufferedOutputStream(new FileOutputStream(destinationPath))) {
+
+            return decode(encodedFilePath, destinationBufferedOutputStream, options);
+        }
+    }
+    
+    /**
+     * Decodes the Steganographically hidden data from the specified encoded file and writes it to
+     * the destination file using the default {@code StegOptions}.
+     *
+     * @param encodedFilePath The path of the encoded file containing hidden data.
+     * @param destinationPath The path of the destination file where the decoded data will be
+     * stored.
+     *
+     * @return {@link DECODING_SUCCESSFUL} if the decoding process is successful.
+     * <br>{@link INVALID_PASSWORD} if the decoding process fails due to an incorrect password.
+     *
+     * @throws FileNotFoundException If the specified encoded file is not found.
+     * @throws IOException If an I/O error occurs while reading or writing files.
+     */
+    public int decode(String encodedFilePath, String destinationPath) throws IOException {
+        
+        return Steganography.this.decode(encodedFilePath, destinationPath, new StegOptions());
+    }
+    
+    /**
+     * Decodes data from multiple encoded files, specified by the provided list of MultiDecodeSteg
+     * objects, and writes the decoded content to a destination file.
+     *
+     * @param multiDecodeList A list of MultiDecodeSteg objects, each containing decoding parameters
+     * for a specific source.
+     * @param destinationPath The file path where the decoded data will be written.
+     *
+     * @return An integer constant indicating the success of the decoding operation.
+     *
+     * @throws FileNotFoundException If any of the specified encoded files is not found.
+     * @throws IOException If an I/O error occurs during the decoding process.
+     * @see MultiDecodeSteg
+     */
+    public int decode(ArrayList<MultiDecodeSteg> multiDecodeList, String destinationPath) throws FileNotFoundException, IOException {
+
+        try (
+                BufferedOutputStream destinationBufferedOutputStream = new BufferedOutputStream(new FileOutputStream(destinationPath));) {
+
+            for (MultiDecodeSteg mds : multiDecodeList) {
+                int decodingResult = decode(mds.getEncodedFilePath(), destinationBufferedOutputStream, mds.getOptions());
+                if (decodingResult == INVALID_PASSWORD) {
+                    return INVALID_PASSWORD;
+                }
+            }
+        }
+
+        return DECODING_SUCCESSFUL;
     }
     
      /**
