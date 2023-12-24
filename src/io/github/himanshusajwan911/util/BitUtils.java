@@ -339,4 +339,16 @@ public class BitUtils {
         byte[] extractedDoubleBytes = extractBitsAt(sourceArray, startIndex, Double.BYTES, bitPosition, BitUtils.Endian.BIG_ENDIAN);
         return Converter.bytesToDouble(extractedDoubleBytes);
     }
+    
+    public static String byteToBit(byte value) {
+        StringBuilder bitRepresentation = new StringBuilder();
+        for (int i = 7; i >= 0; i--) {
+            int bit = (value >> i) & 1;
+            bitRepresentation.append(bit);
+        }
+
+        return bitRepresentation.toString();
+    }
+    
+    
 }
