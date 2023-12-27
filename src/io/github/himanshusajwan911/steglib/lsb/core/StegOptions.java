@@ -74,6 +74,16 @@ public class StegOptions {
         this.endianChangeFrequency = endianChangeFrequency;
         this.password = password;
     }
+    
+    public StegOptions(StegOptions options){
+        this.initialOffset = options.initialOffset;
+        this.byteSkipPerBlock = options.byteSkipPerBlock;
+        this.dataBlockSize = options.dataBlockSize;
+        this.hiddenBitPosition = options.hiddenBitPosition;
+        this.startingEndian = options.startingEndian;
+        this.endianChangeFrequency = options.endianChangeFrequency;
+        this.password = options.password;
+    }
 
     public int getInitialOffset() {
         return initialOffset;
